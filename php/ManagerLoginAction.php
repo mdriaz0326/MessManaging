@@ -1,60 +1,39 @@
-<!DOCTYPE html>
- <head>
-	 <title>Untitled</title>
-	 <meta charset="UTF-8"/>
-	 <link rel="stylesheet" href="" type="text/css"/>
-	 <style>
-	 #submitBtn {
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  margin: 4px 2px;
-  cursor: pointer;
-  border-radius: 5px;
-}
+<?php
+session_start();
+include ("$_SERVER[DOCUMENT_ROOT]/mess_bazar/function/function.php");
 
-#submitBtn:hover {
-//  background-color: #3e8e41;
-    background-color: #ffaa11;
+GetConn(); // Ensure $connect is available from this function
 
-}
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    // Get sanitized input
+    $mobile   = trim($_POST["mobile"]);
+    $password = trim($_POST["password"]);
+    $mess_id  = trim($_POST["mess_id"]);
 
-	 </style>
-	 <script>
-	 $(document).ready(function() {
-  $('#inputName').blur(function() {
-    var a= name.val;
-    if(a<0){
-    $('#submitBtn').disabled
+    // Use prepared statement to avoid SQL injection
+    $stmt = mysqli_prepare($connect, "SELECT * FROM mess_director WHERE mess_id = ? AND mobile = ? AND password = ?");
+    mysqli_stmt_bind_param($stmt, "sss", $mess_id, $mobile, $password);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+
+    if ($result && mysqli_num_rows($result) === 1) {
+        $row = mysqli_fetch_assoc($result);
+
+        // Store session variables
+        $_SESSION['logged_director_id'] = $row["director_id"];
+        $_SESSION['director_login_success'] = true;
+        $_SESSION['success_msg'] = "You have successfully logged in as a Director of this mess.";
+
+        header("Location: ../manager/index.php");
+        exit();
+    } else {
+        $_SESSION['error_msg'] = "No matches found. Please try again.";
+        header("Location: ../manager/mess_director_login.php");
+        exit();
     }
-  });
-});
 
-	 </script>
- </head>
-	 <body>
-	<form>
-  <div class="form-group">
-    <label for="inputName">Name</label>
-    <input type="text" class="form-control" name="name" id="inputName" placeholder="Enter your name">
-  </div>
-  <div class="form-group">
-    <label for="inputEmail">Email address</label>
-    <input type="text" class="form-control" id="inputEmail" placeholder="Enter your email">
-  </div>
-  <button type="submit" class="btn btn-primary" id="submitBtn">Submit</button>
-</form>
-
-	 </body>
- </html>
-150
-20
-10
-300
-200
-20    
+    mysqli_stmt_close($stmt);
+    mysqli_close($connect);
+} else {
+    echo "Invalid request method.";
+}
