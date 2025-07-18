@@ -2,15 +2,14 @@
 session_start();
 include ("$_SERVER[DOCUMENT_ROOT]/mess_bazar/function/function.php");
 
-GetConn(); // Ensure $connect is available from this function
+GetConn(); 
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // Get sanitized input
+   
     $mobile   = trim($_POST["mobile"]);
     $password = trim($_POST["password"]);
     $mess_id  = trim($_POST["mess_id"]);
 
-    // Use prepared statement to avoid SQL injection
     $stmt = mysqli_prepare($connect, "SELECT * FROM mess_director WHERE mess_id = ? AND mobile = ? AND password = ?");
     mysqli_stmt_bind_param($stmt, "sss", $mess_id, $mobile, $password);
     mysqli_stmt_execute($stmt);
@@ -19,7 +18,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if ($result && mysqli_num_rows($result) === 1) {
         $row = mysqli_fetch_assoc($result);
 
-        // Store session variables
         $_SESSION['logged_director_id'] = $row["director_id"];
         $_SESSION['director_login_success'] = true;
         $_SESSION['success_msg'] = "You have successfully logged in as a Director of this mess.";
